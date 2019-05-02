@@ -56,7 +56,7 @@ void loop() {
   else if(infraVoltage<infraThresh){ //Right empty
     turnRight(leftMotorDirPin,leftMotorSpeedPin,rightMotorDirPin,rightMotorSpeedPin);
   }
-  else if(ultDist>ultSonicThresh){ //Front blocked
+  else if(ultDist<ultSonicThresh){ //Front blocked
     turnLeft(leftMotorDirPin,leftMotorSpeedPin,rightMotorDirPin,rightMotorSpeedPin);
   }
   else{ //Front empty
@@ -76,19 +76,19 @@ long calculateSonicDist(int speakerPin, int micPin){
 }
 
 void turnRight(int lmd, int lms, int rmd, int rms){ //This is supposed to be set up to rotate in place
-  digitalWrite(lmd,HIGH);
-  digitalWrite(lms,HIGH);
+  digitalWrite(rmd,HIGH);
   digitalWrite(rms,HIGH);
-  digitalWrite(rmd,LOW);
+  digitalWrite(lms,HIGH);
+  digitalWrite(lmd,LOW);
   delay() //Set this for as long as you want it to turn
   halt(lspeed,rspeed);
 }
 
 void turnLeft(int lmd, int lms, int rmd, int rms){ //This is supposed to be set up to rotate in place
-  digitalWrite(rmd,HIGH);
-  digitalWrite(rms,HIGH);
+  digitalWrite(lmd,HIGH);
   digitalWrite(lms,HIGH);
-  digitalWrite(lmd,LOW);
+  digitalWrite(rms,HIGH);
+  digitalWrite(rmd,LOW);
   delay() //Set this for as long as you want it to turn
   halt(lspeed,rspeed);
 }
