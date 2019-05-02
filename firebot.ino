@@ -47,9 +47,12 @@ void loop() {
   Serial.println(photoVoltage);
 
   if(photoVoltage>photoThresh){ //Found Light
-    extinguish(leftMotorDirPin,ultSonicOutPin,ultSonicInPin,ultSonicThresh,leftMotorSpeedPin,rightMotorDirPin,rightMotorSpeedPin,fanMotorPin);
+    while(calculateSonicDist(uOut,uIn)<uThresh){
+      goForward(ldir,lspeed,rdir,rspeed);
+    }
+    extinguish(leftMotorSpeedPin,rightMotorSpeedPin,fanMotorPin);
     //If we think that the current extinguish() is fine, then I'll replace this part with the code in the function.
-    stopMoving(0,0);
+    halt(lspeed,rspeed);
   }
   else if(infraVoltage<infraThresh){ //Right Empty
     turnRight(leftMotorDirPin,leftMotorSpeedPin,rightMotorDirPin,rightMotorSpeedPin);
@@ -73,21 +76,20 @@ long calculateSonicDist(int speakerPin, int micPin){
   return pulseIn(micPin,HIGH)/58;
 }
 
-void turnRight(int lmd, int lms, int rmd, int rms){ //I think we should discuss turning, like if we set one wheel to on and the other off, or to rotate them in opposite directions.
+void turnRight(int lmd, int lms, int rmd, int rms){ //This is supposed to be set up to rotate in place
   digitalWrite(lmd,HIGH);
   digitalWrite(lms,HIGH);
-  digitalWrite(rms,LOW);
+  digitalWrite(rms,HIGH);
+  digitalWrite(rmd,LOW);
+  delay() //Set this for as long as you want it to turn
 }
 
 void turnLeft(int lmd, int lms, int rmd, int rms){
   digitalWrite(rmd,HIGH);
   digitalWrite(rms,HIGH);
-  digitalWrite(lms,LOW);
-}
-
-void stopMoving(int lspeed, int rspeed){
-  digitalWrite(lspeed,LOW);
-  digitalWrite(rspeed,LOW);
+  digitalWrite(lms,HIGH);
+  digitalWrite(lmd,LOW);
+  delay() //Set this for as long as you want it to turn
 }
 
 void goForward(int ldir, int lspeed, int rdir, int rspeed){
@@ -102,10 +104,7 @@ void halt(int lspeed, int rspeed){
   digitalWrite(rspeed,LOW);
 }
 
-void extinguish(int fmp, int uOut, int uIn, int uThresh, int ldir, int lspeed, int rdir, int rspeed){
-  while(calculateSonicDist(uOut,uIn)<uThresh){
-    goForward(ldir,lspeed,rdir,rspeed);
-  }
+void extinguish(int lspeed, int rspeed, int fmp){
   halt(lspeed,rspeed);
   digitalWrite(fmp,HIGH);
   delay(5000);
