@@ -1,17 +1,17 @@
 //Ultrasonic Sensor
 int ultSonicOutPin = 7;
 int ultSonicInPin = 10;
-long ultSonicThresh = 25.0; //To be set
+long ultSonicThresh = 15.0; //To be set
 long ultDist;
 
 //Infrared Sensor
 int infraPin = A2;
-float infraThresh = 1.5;//To be set
+float infraThresh = 1.25;//To be set
 float infraVoltage = 0;
 
 //Phototransistor
 const int photoPin = A3;
-int photoThresh = 5; //To be set
+int photoThresh = 3; //To be set
 float photoVoltage = 0;
 
 //Wheel Motors
@@ -34,7 +34,7 @@ void setup() {
   pinMode(rightMotorDirPin, OUTPUT);
   pinMode(rightMotorSpeedPin, OUTPUT);
   pinMode(fanMotorPin, OUTPUT);
-  Serial.begin(9600);
+ Serial.begin(9600);
 }
 
 void loop() {
@@ -49,26 +49,32 @@ void loop() {
   Serial.print("photoVoltage: ");
   Serial.println(photoVoltage);
 
-  if(photoVoltage>=photoThresh){ //Found Light
+  if(photoVoltage>photoThresh){ //Found Light
     while(calculateSonicDist(ultSonicOutPin,ultSonicInPin)>ultSonicThresh){
       goForward(leftMotorDirPin,leftMotorSpeedPin,rightMotorDirPin,rightMotorSpeedPin);
     }
     extinguish(leftMotorSpeedPin,rightMotorSpeedPin,fanMotorPin);
     //If we think that the current extinguish() is fine, then I'll replace this part with the code in the function.
     halt(leftMotorSpeedPin,rightMotorSpeedPin);
-  }
-  else if((infraVoltage<infraThresh)){ //Right Empty 
-    turnRight(leftMotorDirPin,leftMotorSpeedPin,rightMotorDirPin,rightMotorSpeedPin);
+    exit(1);
   }
   else if((ultDist<ultSonicThresh)){ //Front blocked
    // goBack(leftMotorDirPin,leftMotorSpeedPin,rightMotorDirPin,rightMotorSpeedPin);
+   halt(leftMotorSpeedPin,rightMotorSpeedPin);
     turnLeft(leftMotorDirPin,leftMotorSpeedPin,rightMotorDirPin,rightMotorSpeedPin);
   }
+  else if((infraVoltage<infraThresh)){ //Right Empty 
+    halt(leftMotorSpeedPin,rightMotorSpeedPin);
+    turnRight(leftMotorDirPin,leftMotorSpeedPin,rightMotorDirPin,rightMotorSpeedPin);
+  }
   else {
+
+
+    
     goForward(leftMotorDirPin,leftMotorSpeedPin,rightMotorDirPin,rightMotorSpeedPin);
   } 
   
-  delay(25);
+  delay(75);
 }
 
 long calculateSonicDist(int speakerPin, int micPin){
@@ -85,16 +91,17 @@ void turnRight(int leftMotorDirPin, int leftMotorSpeedPin, int rightMotorDirPin,
   digitalWrite(leftMotorSpeedPin,HIGH);
   digitalWrite(rightMotorSpeedPin,HIGH);
   digitalWrite(rightMotorDirPin,HIGH);
-  delay(75);
+  delay(250);
   halt(leftMotorSpeedPin,rightMotorSpeedPin);
 }
 
 void turnLeft(int leftMotorDirPin, int leftMotorSpeedPin, int rightMotorDirPin, int rightMotorSpeedPin){
+  goBack(leftMotorDirPin,leftMotorSpeedPin,rightMotorDirPin,rightMotorSpeedPin);
   digitalWrite(rightMotorDirPin,LOW);
   digitalWrite(rightMotorSpeedPin,HIGH);
   digitalWrite(leftMotorSpeedPin,HIGH);
   digitalWrite(leftMotorDirPin,HIGH);
-  delay(75);
+  delay(250);
   halt(leftMotorSpeedPin,rightMotorSpeedPin);
 }
 
@@ -103,9 +110,16 @@ void goForward(int leftMotorDirPin, int leftMotorSpeedPin, int rightMotorDirPin,
   digitalWrite(rightMotorDirPin,LOW);
   digitalWrite(leftMotorSpeedPin,HIGH);
   digitalWrite(rightMotorSpeedPin,HIGH);
-  halt(leftMotorSpeedPin,rightMotorSpeedPin);
+//  
+
 }
-//void goBack(int leftMotorDirPin,int leftMotorSpeedPin,int rightMotorDirPin,int rightMotorSpeedPin)
+void goBack(int leftMotorDirPin,int leftMotorSpeedPin,int rightMotorDirPin,int rightMotorSpeedPin){
+  digitalWrite(leftMotorDirPin, HIGH);
+  digitalWrite(rightMotorDirPin,HIGH);
+  digitalWrite(leftMotorSpeedPin,HIGH);
+  digitalWrite(rightMotorSpeedPin,HIGH);
+  delay(50);
+}
 
 void halt(int leftMotorSpeedPin, int rightMotorSpeedPin){
   digitalWrite(leftMotorSpeedPin,LOW);
