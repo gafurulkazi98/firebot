@@ -1,17 +1,17 @@
 //Ultrasonic Sensor
 int ultSonicOutPin = 7;
 int ultSonicInPin = 10;
-long ultSonicThresh = 15.0; //To be set
+long ultSonicThresh = 15.0;
 long ultDist;
 
 //Infrared Sensor
 int infraPin = A2;
-float infraThresh = 1.25;//To be set
+float infraThresh = 1.25;
 float infraVoltage = 0;
 
 //Phototransistor
 const int photoPin = A3;
-int photoThresh = 3; //To be set
+int photoThresh = 1.4;
 float photoVoltage = 0;
 
 //Wheel Motors
@@ -21,7 +21,13 @@ int rightMotorDirPin = 13;
 int rightMotorSpeedPin = 11;
 
 //DC Fan Motor
-int fanMotorPin = 4; //To be set
+int fanMotorPin = 4;
+
+int slowMode = 0;
+int rt=250;
+int lt=300;
+int bt=50;
+int ht=15;
 
 void setup() {
  
@@ -41,7 +47,7 @@ void loop() {
  
   ultDist = calculateSonicDist(ultSonicOutPin,ultSonicInPin);
   infraVoltage = (analogRead(infraPin)/1023.0)*5.0;
-  photoVoltage = (analogRead(photoPin)/1023.0)*5.0; //Is this the right equation?
+  photoVoltage = (analogRead(photoPin)/1023.0)*5.0;
   Serial.print("ultDist: ");
   Serial.println(ultDist);
   Serial.print("infraVoltage: ");
@@ -51,29 +57,26 @@ void loop() {
 
   if(photoVoltage>photoThresh){ //Found Light
     while(calculateSonicDist(ultSonicOutPin,ultSonicInPin)>ultSonicThresh){
+      Serial.println("DING!");
       goForward(leftMotorDirPin,leftMotorSpeedPin,rightMotorDirPin,rightMotorSpeedPin);
     }
     extinguish(leftMotorSpeedPin,rightMotorSpeedPin,fanMotorPin);
-    //If we think that the current extinguish() is fine, then I'll replace this part with the code in the function.
-    halt(leftMotorSpeedPin,rightMotorSpeedPin);
+    halt(leftMotorSpeedPin,rightMotorSpeedPin,ht);
     exit(1);
   }
   else if((ultDist<ultSonicThresh)){ //Front blocked
    // goBack(leftMotorDirPin,leftMotorSpeedPin,rightMotorDirPin,rightMotorSpeedPin);
-   halt(leftMotorSpeedPin,rightMotorSpeedPin);
-    turnLeft(leftMotorDirPin,leftMotorSpeedPin,rightMotorDirPin,rightMotorSpeedPin);
+   halt(leftMotorSpeedPin,rightMotorSpeedPin, ht);
+   
+    turnLeft(leftMotorDirPin,leftMotorSpeedPin,rightMotorDirPin,rightMotorSpeedPin, lt);
   }
   else if((infraVoltage<infraThresh)){ //Right Empty 
-    halt(leftMotorSpeedPin,rightMotorSpeedPin);
-    turnRight(leftMotorDirPin,leftMotorSpeedPin,rightMotorDirPin,rightMotorSpeedPin);
+    halt(leftMotorSpeedPin,rightMotorSpeedPin,ht);
+    turnRight(leftMotorDirPin,leftMotorSpeedPin,rightMotorDirPin,rightMotorSpeedPin, rt);
   }
   else {
-
-
-    
     goForward(leftMotorDirPin,leftMotorSpeedPin,rightMotorDirPin,rightMotorSpeedPin);
-  } 
-  
+  }
   delay(75);
 }
 
@@ -86,23 +89,23 @@ long calculateSonicDist(int speakerPin, int micPin){
   return pulseIn(micPin,HIGH)/58;
 }
 
-void turnRight(int leftMotorDirPin, int leftMotorSpeedPin, int rightMotorDirPin, int rightMotorSpeedPin){ //I think we should discuss turning, like if we set one wheel to on and the other off, or to rotate them in opposite directions.
+void turnRight(int leftMotorDirPin, int leftMotorSpeedPin, int rightMotorDirPin, int rightMotorSpeedPin, int t){
   digitalWrite(leftMotorDirPin,LOW);
   digitalWrite(leftMotorSpeedPin,HIGH);
   digitalWrite(rightMotorSpeedPin,HIGH);
   digitalWrite(rightMotorDirPin,HIGH);
   delay(250);
-  halt(leftMotorSpeedPin,rightMotorSpeedPin);
+  halt(leftMotorSpeedPin,rightMotorSpeedPin, ht);
 }
 
-void turnLeft(int leftMotorDirPin, int leftMotorSpeedPin, int rightMotorDirPin, int rightMotorSpeedPin){
-  goBack(leftMotorDirPin,leftMotorSpeedPin,rightMotorDirPin,rightMotorSpeedPin);
+void turnLeft(int leftMotorDirPin, int leftMotorSpeedPin, int rightMotorDirPin, int rightMotorSpeedPin, int t){
+  goBack(leftMotorDirPin,leftMotorSpeedPin,rightMotorDirPin,rightMotorSpeedPin,bt);
   digitalWrite(rightMotorDirPin,LOW);
   digitalWrite(rightMotorSpeedPin,HIGH);
   digitalWrite(leftMotorSpeedPin,HIGH);
   digitalWrite(leftMotorDirPin,HIGH);
-  delay(250);
-  halt(leftMotorSpeedPin,rightMotorSpeedPin);
+  delay(300);
+  halt(leftMotorSpeedPin,rightMotorSpeedPin, ht);
 }
 
 void goForward(int leftMotorDirPin, int leftMotorSpeedPin, int rightMotorDirPin, int rightMotorSpeedPin){
@@ -113,7 +116,7 @@ void goForward(int leftMotorDirPin, int leftMotorSpeedPin, int rightMotorDirPin,
 //  
 
 }
-void goBack(int leftMotorDirPin,int leftMotorSpeedPin,int rightMotorDirPin,int rightMotorSpeedPin){
+void goBack(int leftMotorDirPin,int leftMotorSpeedPin,int rightMotorDirPin,int rightMotorSpeedPin, int t){
   digitalWrite(leftMotorDirPin, HIGH);
   digitalWrite(rightMotorDirPin,HIGH);
   digitalWrite(leftMotorSpeedPin,HIGH);
@@ -121,14 +124,14 @@ void goBack(int leftMotorDirPin,int leftMotorSpeedPin,int rightMotorDirPin,int r
   delay(50);
 }
 
-void halt(int leftMotorSpeedPin, int rightMotorSpeedPin){
+void halt(int leftMotorSpeedPin, int rightMotorSpeedPin, int t){
   digitalWrite(leftMotorSpeedPin,LOW);
   digitalWrite(rightMotorSpeedPin,LOW);
   delay(15);
 }
 
 void extinguish(int leftMotorSpeedPin, int rightMotorSpeedPin, int fanMotorPin){
-  halt(leftMotorSpeedPin,rightMotorSpeedPin);
+  halt(leftMotorSpeedPin,rightMotorSpeedPin, ht);
   digitalWrite(fanMotorPin,HIGH);
   delay(500);
   digitalWrite(fanMotorPin, LOW);
